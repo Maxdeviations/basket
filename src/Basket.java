@@ -3,7 +3,9 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 import static java.lang.System.out;
 
-public class Basket {
+public class Basket implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private String[] goods;
     private int[] prices;
     private int[] quantities;
@@ -36,20 +38,13 @@ public class Basket {
 
     public void saveTxt(File textFile) throws FileNotFoundException {
         try (PrintWriter out = new PrintWriter(textFile)) {
-            for (var good : goods) {
-                out.print(good + " ");
-            }
-            out.println();
-
-            for (var price : prices) {
-                out.print(price + " ");
-            }
-            out.println();
-
-
-            for (var quantity : quantities) {
-                out.print(quantity + " ");
-            }
+            out.println(String.join(" ", goods));
+            out.println(String.join("", Arrays.stream(prices)
+                    .mapToObj(String::valueOf)
+                    .toArray(String[]::new)));
+            out.println(String.join("", Arrays.stream(quantities)
+                    .mapToObj(String::valueOf)
+                    .toArray(String[]::new)));
         }
     }
 
@@ -70,6 +65,24 @@ public class Basket {
                     .mapToInt(Integer::intValue)
                     .toArray();
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return basket;
+    }
+
+    public void saveBin(File file) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
+            oos.writeObject(this);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Basket loadFromBinFile(File file) throws FileNotFoundException {
+        Basket basket = null;
+        try (ObjectInputStream ois = new ObjectInputStream((new FileInputStream(file)))) {
+            basket = (Basket) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
         return basket;
